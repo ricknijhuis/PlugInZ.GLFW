@@ -7,130 +7,221 @@ comptime {
     _ = std.testing.refAllDeclsRecursive(@This());
 }
 
+pub const init = glfwInit;
 extern fn glfwInit() i32;
+
+pub const terminate = glfwTerminate;
 extern fn glfwTerminate() void;
+
+pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
-extern fn glfwWaitEvents() void;
-extern fn glfwWaitEventsTimeout(timeout: f64) void;
+
+pub const vulkanSupported = glfwVulkanSupported;
 extern fn glfwVulkanSupported() i32;
+
+pub const getTime = glfwGetTime;
 extern fn glfwGetTime() f64;
+
+pub const setTime = glfwSetTime;
 extern fn glfwSetTime(time: f64) void;
+
+pub const rawMouseMotionSupported = glfwRawMouseMotionSupported;
 extern fn glfwRawMouseMotionSupported() i32;
+
+pub const getError = glfwGetError;
 extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
+
+pub const setErrorCallback = glfwSetErrorCallback;
 extern fn glfwSetErrorCallback(callback: ?ErrorFn) ?ErrorFn;
 
 // Window
+pub const createWindow = glfwCreateWindow;
 extern fn glfwCreateWindow(
     width: i32,
     height: i32,
     title: [*:0]const u8,
-    monitor: ?*GLFWMonitor,
-    share: ?*GLFWwindow,
-) ?*GLFWwindow;
-extern fn glfwGetWindowAttrib(window: *GLFWwindow, attrib: Attribute) i32;
-extern fn glfwSetWindowAttrib(window: *GLFWwindow, attrib: Attribute, value: i32) void;
-extern fn glfwGetWindowUserPointer(window: *GLFWwindow) ?*anyopaque;
-extern fn glfwSetWindowUserPointer(window: *GLFWwindow, pointer: ?*anyopaque) void;
-extern fn glfwWindowShouldClose(window: *GLFWwindow) i32;
-extern fn glfwSetWindowShouldClose(window: *GLFWwindow, should_close: i32) void;
-extern fn glfwDestroyWindow(window: *GLFWwindow) void;
-extern fn glfwSetWindowSizeLimits(window: *GLFWwindow, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void;
-extern fn glfwGetKey(window: *GLFWwindow, key: Key) Action;
-extern fn glfwGetMouseButton(window: *GLFWwindow, button: MouseButton) Action;
-extern fn glfwGetCursorPos(window: *GLFWwindow, xpos: *f64, ypos: *f64) void;
-extern fn glfwGetFramebufferSize(window: *GLFWwindow, width: *i32, height: *i32) void;
-extern fn glfwGetWindowSize(window: *GLFWwindow, width: *i32, height: *i32) void;
-extern fn glfwSetWindowSize(window: *GLFWwindow, width: i32, height: i32) void;
-extern fn glfwGetWindowPos(window: *GLFWwindow, xpos: *i32, ypos: *i32) void;
-extern fn glfwSetWindowPos(window: *GLFWwindow, xpos: i32, ypos: i32) void;
-extern fn glfwSetWindowTitle(window: *GLFWwindow, title: [*:0]const u8) void;
-extern fn glfwFocusWindow(window: *GLFWwindow) void;
-extern fn glfwSetFramebufferSizeCallback(window: *GLFWwindow, callback: ?FramebufferSizeFn) ?FramebufferSizeFn;
+    monitor: ?*Monitor,
+    share: ?*Window,
+) ?*Window;
+
+pub const getWindowAttrib = glfwGetWindowAttrib;
+extern fn glfwGetWindowAttrib(window: *Window, attrib: Attribute) i32;
+
+pub const setWindowAttrib = glfwSetWindowAttrib;
+extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
+
+pub const getWindowUserPointer = glfwGetWindowUserPointer;
+extern fn glfwGetWindowUserPointer(window: *Window) ?*anyopaque;
+
+pub const setWindowUserPointer = glfwSetWindowUserPointer;
+extern fn glfwSetWindowUserPointer(window: *Window, pointer: ?*anyopaque) void;
+
+pub const windowShouldClose = glfwWindowShouldClose;
+extern fn glfwWindowShouldClose(window: *Window) i32;
+
+pub const setWindowShouldClose = glfwSetWindowShouldClose;
+extern fn glfwSetWindowShouldClose(window: *Window, should_close: i32) void;
+
+pub const destroyWindow = glfwDestroyWindow;
+extern fn glfwDestroyWindow(window: *Window) void;
+
+pub const setWindowSizeLimits = glfwSetWindowSizeLimits;
+extern fn glfwSetWindowSizeLimits(window: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void;
+
+pub const getKey = glfwGetKey;
+extern fn glfwGetKey(window: *Window, key: Key) Action;
+
+pub const getMouseButton = glfwGetMouseButton;
+extern fn glfwGetMouseButton(window: *Window, button: MouseButton) Action;
+
+pub const getCursorPos = glfwGetCursorPos;
+extern fn glfwGetCursorPos(window: *Window, xpos: *f64, ypos: *f64) void;
+
+pub const getFramebufferSize = glfwGetFramebufferSize;
+extern fn glfwGetFramebufferSize(window: *Window, width: *i32, height: *i32) void;
+
+pub const getWindowSize = glfwGetWindowSize;
+extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
+
+pub const setWindowSize = glfwSetWindowSize;
+extern fn glfwSetWindowSize(window: *Window, width: i32, height: i32) void;
+
+pub const getWindowPos = glfwGetWindowPos;
+extern fn glfwGetWindowPos(window: *Window, xpos: *i32, ypos: *i32) void;
+
+pub const setWindowPos = glfwSetWindowPos;
+extern fn glfwSetWindowPos(window: *Window, xpos: i32, ypos: i32) void;
+
+pub const setWindowTitle = glfwSetWindowTitle;
+extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
+
+pub const focusWindow = glfwFocusWindow;
+extern fn glfwFocusWindow(window: *Window) void;
+
+pub const setWindowCloseCallback = glfwSetWindowCloseCallback;
+extern fn glfwSetWindowCloseCallback(window: *Window, callback: ?WindowCloseFn) ?WindowCloseFn;
+pub const WindowCloseFn = *const fn (
+    window: *Window,
+) callconv(.C) void;
+
+pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
+extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?FramebufferSizeFn) ?FramebufferSizeFn;
 pub const FramebufferSizeFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     width: i32,
     height: i32,
 ) callconv(.C) void;
-extern fn glfwSetWindowSizeCallback(window: *GLFWwindow, callback: ?WindowSizeFn) ?WindowSizeFn;
+
+pub const setWindowSizeCallback = glfwSetWindowSizeCallback;
+extern fn glfwSetWindowSizeCallback(window: *Window, callback: ?WindowSizeFn) ?WindowSizeFn;
 pub const WindowSizeFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     width: i32,
     height: i32,
 ) callconv(.C) void;
-extern fn glfwSetWindowPosCallback(window: *GLFWwindow, callback: ?WindowPosFn) ?WindowPosFn;
+
+pub const setWindowPosCallback = glfwSetWindowPosCallback;
+extern fn glfwSetWindowPosCallback(window: *Window, callback: ?WindowPosFn) ?WindowPosFn;
 pub const WindowPosFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     xpos: i32,
     ypos: i32,
 ) callconv(.C) void;
-extern fn glfwSetWindowFocusCallback(window: *GLFWwindow, callback: ?WindowFocusFn) ?WindowFocusFn;
+
+pub const setWindowFocusCallback = glfwSetWindowFocusCallback;
+extern fn glfwSetWindowFocusCallback(window: *Window, callback: ?WindowFocusFn) ?WindowFocusFn;
 pub const WindowFocusFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     focused: i32,
 ) callconv(.C) void;
-extern fn glfwSetWindowIconifyCallback(window: *GLFWwindow, callback: ?IconifyFn) ?IconifyFn;
+
+pub const setWindowIconifyCallback = glfwSetWindowIconifyCallback;
+extern fn glfwSetWindowIconifyCallback(window: *Window, callback: ?IconifyFn) ?IconifyFn;
 pub const IconifyFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     iconified: i32,
 ) callconv(.C) void;
-extern fn glfwSetWindowContentScaleCallback(window: *GLFWwindow, callback: ?WindowContentScaleFn) ?WindowContentScaleFn;
+
+pub const setWindowContentScaleCallback = glfwSetWindowContentScaleCallback;
+extern fn glfwSetWindowContentScaleCallback(window: *Window, callback: ?WindowContentScaleFn) ?WindowContentScaleFn;
 pub const WindowContentScaleFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     xscale: f32,
     yscale: f32,
 ) callconv(.C) void;
-extern fn glfwSetKeyCallback(window: *GLFWwindow, callback: ?KeyFn) ?KeyFn;
+
+pub const setKeyCallback = glfwSetKeyCallback;
+extern fn glfwSetKeyCallback(window: *Window, callback: ?KeyFn) ?KeyFn;
 pub const KeyFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     key: Key,
     scancode: i32,
     action: Action,
     mods: Mods,
 ) callconv(.C) void;
-extern fn glfwSetCharCallback(window: *GLFWwindow, callback: ?CharFn) ?CharFn;
+
+pub const setCharCallback = glfwSetCharCallback;
+extern fn glfwSetCharCallback(window: *Window, callback: ?CharFn) ?CharFn;
 pub const CharFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     codepoint: u32,
 ) callconv(.C) void;
-extern fn glfwSetDropCallback(window: *GLFWwindow, callback: ?DropFn) ?DropFn;
+
+pub const setDropCallback = glfwSetDropCallback;
+extern fn glfwSetDropCallback(window: *Window, callback: ?DropFn) ?DropFn;
 pub const DropFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     path_count: i32,
     paths: [*][*:0]const u8,
 ) callconv(.C) void;
-extern fn glfwSetMouseButtonCallback(window: *GLFWwindow, callback: ?MouseButtonFn) ?MouseButtonFn;
+
+pub const setMouseButtonCallback = glfwSetMouseButtonCallback;
+extern fn glfwSetMouseButtonCallback(window: *Window, callback: ?MouseButtonFn) ?MouseButtonFn;
 pub const MouseButtonFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     button: MouseButton,
     action: Action,
     mods: Mods,
 ) callconv(.C) void;
-extern fn glfwSetCursorPosCallback(window: *GLFWwindow, callback: ?CursorPosFn) ?CursorPosFn;
+
+pub const setCursorPosCallback = glfwSetCursorPosCallback;
+extern fn glfwSetCursorPosCallback(window: *Window, callback: ?CursorPosFn) ?CursorPosFn;
 pub const CursorPosFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     xpos: f64,
     ypos: f64,
 ) callconv(.C) void;
-extern fn glfwSetScrollCallback(window: *GLFWwindow, callback: ?ScrollFn) ?ScrollFn;
+
+pub const setScrollCallback = glfwSetScrollCallback;
+extern fn glfwSetScrollCallback(window: *Window, callback: ?ScrollFn) ?ScrollFn;
 pub const ScrollFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     xoffset: f64,
     yoffset: f64,
 ) callconv(.C) void;
-extern fn glfwSetCursorEnterCallback(window: *GLFWwindow, callback: ?CursorEnterFn) ?CursorEnterFn;
+
+pub const setCursorEnterCallback = glfwSetCursorEnterCallback;
+extern fn glfwSetCursorEnterCallback(window: *Window, callback: ?CursorEnterFn) ?CursorEnterFn;
 pub const CursorEnterFn = *const fn (
-    window: *GLFWwindow,
+    window: *Window,
     entered: i32,
 ) callconv(.C) void;
 
 // Platform
-extern fn glfwGetWin32Window(*GLFWwindow) ?std.os.windows.HWND;
-extern fn glfwGetWaylandWindow(window: *GLFWwindow) ?*anyopaque;
-extern fn glfwGetX11Window(window: *GLFWwindow) u32;
-extern fn glfwGetCocoaWindow(window: *GLFWwindow) ?*anyopaque;
+pub const getWin32Window = glfwGetWin32Window;
+extern fn glfwGetWin32Window(*Window) ?std.os.windows.HWND;
 
-pub const GLFWMonitor = opaque {};
-pub const GLFWwindow = opaque {};
+pub const getWaylandWindow = glfwGetWaylandWindow;
+extern fn glfwGetWaylandWindow(window: *Window) ?*anyopaque;
+
+pub const getX11Window = glfwGetX11Window;
+extern fn glfwGetX11Window(window: *Window) u32;
+
+pub const getCocoaWindow = glfwGetCocoaWindow;
+extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
+
+pub const Monitor = opaque {};
+pub const Window = opaque {};
 pub const GlProc = *const anyopaque;
 pub const ErrorFn = *const fn (
     error_code: i32,
