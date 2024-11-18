@@ -223,6 +223,45 @@ extern fn glfwGetX11Window(window: *Window) u32;
 pub const getCocoaWindow = glfwGetCocoaWindow;
 extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
 
+pub fn convertToError(e: i32) Error!void {
+    return switch (e) {
+        0 => {},
+        0x00010001 => Error.NotInitialized,
+        0x00010002 => Error.NoCurrentContext,
+        0x00010003 => Error.InvalidEnum,
+        0x00010004 => Error.InvalidValue,
+        0x00010005 => Error.OutOfMemory,
+        0x00010006 => Error.APIUnavailable,
+        0x00010007 => Error.VersionUnavailable,
+        0x00010008 => Error.PlatformError,
+        0x00010009 => Error.FormatUnavailable,
+        0x0001000A => Error.NoWindowContext,
+        0x0001000B => Error.CursorUnavailable,
+        0x0001000C => Error.FeatureUnavailable,
+        0x0001000D => Error.FeatureUnimplemented,
+        0x0001000E => Error.PlatformUnavailable,
+        else => Error.Unknown,
+    };
+}
+
+pub const Error = error{
+    NotInitialized,
+    NoCurrentContext,
+    InvalidEnum,
+    InvalidValue,
+    OutOfMemory,
+    APIUnavailable,
+    VersionUnavailable,
+    PlatformError,
+    FormatUnavailable,
+    NoWindowContext,
+    CursorUnavailable,
+    FeatureUnavailable,
+    FeatureUnimplemented,
+    PlatformUnavailable,
+    Unknown,
+};
+
 pub const Monitor = opaque {};
 pub const Window = opaque {};
 pub const GlProc = *const anyopaque;
