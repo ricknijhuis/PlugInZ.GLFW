@@ -36,6 +36,8 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    const dep = b.dependency("glfw", .{});
+
     const glfw = if (options.shared) blk: {
         const lib = b.addSharedLibrary(.{
             .name = "glfw",
@@ -64,7 +66,7 @@ pub fn build(b: *std.Build) void {
             glfw.linkSystemLibrary("shell32");
             glfw.addCSourceFiles(.{
                 .files = &.{
-                    src_dir ++ "platform.c",
+                    dep.path(src_dir ++ "platform.c").getPath(b),
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
