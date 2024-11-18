@@ -34,6 +34,13 @@ extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
 pub const setErrorCallback = glfwSetErrorCallback;
 extern fn glfwSetErrorCallback(callback: ?ErrorFn) ?ErrorFn;
 
+// Input
+pub const getKeyName = glfwGetKeyName;
+extern fn glfwGetKeyName(key: i32) ?[*:0]const u8;
+
+pub const getKeyScancode = glfwGetKeyScancode;
+extern fn glfwGetKeyScancode(key: i32) i32;
+
 // Window
 pub const createWindow = glfwCreateWindow;
 extern fn glfwCreateWindow(
