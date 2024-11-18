@@ -207,6 +207,9 @@ pub const CursorEnterFn = *const fn (
     entered: i32,
 ) callconv(.C) void;
 
+pub const windowHint = glfwWindowHint;
+extern fn glfwWindowHint(WindowHint, value: i32) void;
+
 // Platform
 pub const getWin32Window = glfwGetWin32Window;
 extern fn glfwGetWin32Window(*Window) ?std.os.windows.HWND;
@@ -227,6 +230,63 @@ pub const ErrorFn = *const fn (
     error_code: i32,
     description: *?[:0]const u8,
 ) callconv(.C) void;
+
+pub const ClientApi = enum(i32) {
+    no_api = 0,
+    opengl_api = 0x00030001,
+    opengl_es_api = 0x00030002,
+};
+
+pub const WindowHint = enum(i32) {
+    focused = 0x00020001,
+    iconified = 0x00020002,
+    resizable = 0x00020003,
+    visible = 0x00020004,
+    decorated = 0x00020005,
+    auto_iconify = 0x00020006,
+    floating = 0x00020007,
+    maximized = 0x00020008,
+    center_cursor = 0x00020009,
+    transparent_framebuffer = 0x0002000A,
+    hovered = 0x0002000B,
+    focus_on_show = 0x0002000C,
+    mouse_passthrough = 0x0002000D,
+    position_x = 0x0002000E,
+    position_y = 0x0002000F,
+    red_bits = 0x00021001,
+    green_bits = 0x00021002,
+    blue_bits = 0x00021003,
+    alpha_bits = 0x00021004,
+    depth_bits = 0x00021005,
+    stencil_bits = 0x00021006,
+    // ACCUM_*_BITS/AUX_BUFFERS are deprecated
+    stereo = 0x0002100C,
+    samples = 0x0002100D,
+    srgb_capable = 0x0002100E,
+    refresh_rate = 0x0002100F,
+    doublebuffer = 0x00021010,
+    client_api = 0x00022001,
+    context_version_major = 0x00022002,
+    context_version_minor = 0x00022003,
+    context_revision = 0x00022004,
+    context_robustness = 0x00022005,
+    opengl_forward_compat = 0x00022006,
+    opengl_debug_context = 0x00022007,
+    opengl_profile = 0x00022008,
+    context_release_behaviour = 0x00022009,
+    context_no_error = 0x0002200A,
+    context_creation_api = 0x0002200B,
+    scale_to_monitor = 0x0002200C,
+    scale_framebuffer = 0x0002200D,
+    cocoa_retina_framebuffer = 0x00023001,
+    cocoa_frame_name = 0x00023002,
+    cocoa_graphics_switching = 0x00023003,
+    x11_class_name = 0x00024001,
+    x11_instance_name = 0x00024002,
+    win32_keyboard_menu = 0x00025001,
+    win32_showdefault = 0x00025002,
+    wayland_app_id = 0x00026001,
+};
 
 pub const Action = enum(i32) {
     release,
