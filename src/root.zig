@@ -34,6 +34,10 @@ extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
 pub const setErrorCallback = glfwSetErrorCallback;
 extern fn glfwSetErrorCallback(callback: ?ErrorFn) ?ErrorFn;
 
+// Vulkan
+pub const getRequiredInstanceExtensions = glfwGetRequiredInstanceExtensions;
+extern fn glfwGetRequiredInstanceExtensions(count: *i32) [*c][*c]const u8;
+
 // Input
 pub const getKeyName = glfwGetKeyName;
 extern fn glfwGetKeyName(key: i32) ?[*:0]const u8;
@@ -215,7 +219,10 @@ pub const CursorEnterFn = *const fn (
 ) callconv(.C) void;
 
 pub const windowHint = glfwWindowHint;
-extern fn glfwWindowHint(WindowHint, value: i32) void;
+extern fn glfwWindowHint(hint: WindowHint, value: i32) void;
+
+pub const defaultWindowHints = glfwDefaultWindowHints;
+extern fn glfwDefaultWindowHints() void;
 
 // Platform
 pub const getWin32Window = glfwGetWin32Window;
