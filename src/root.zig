@@ -61,10 +61,15 @@ extern fn glfwGetWindowAttrib(window: *Window, attrib: Attribute) i32;
 pub const setWindowAttrib = glfwSetWindowAttrib;
 extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
 
-pub const getWindowUserPointer = glfwGetWindowUserPointer;
+pub inline fn getWindowUserPointer(T: type, window: *Window) ?*T {
+    return @alignCast(@ptrCast(glfwGetWindowUserPointer(window)));
+}
+
 extern fn glfwGetWindowUserPointer(window: *Window) ?*anyopaque;
 
-pub const setWindowUserPointer = glfwSetWindowUserPointer;
+pub inline fn setWindowUserPointer(T: type, window: *Window, pointer: ?*T) void {
+    glfwSetWindowUserPointer(window, @alignCast(@ptrCast(pointer)));
+}
 extern fn glfwSetWindowUserPointer(window: *Window, pointer: ?*anyopaque) void;
 
 pub const windowShouldClose = glfwWindowShouldClose;
