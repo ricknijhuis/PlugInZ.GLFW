@@ -114,6 +114,12 @@ extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
 pub const focusWindow = glfwFocusWindow;
 extern fn glfwFocusWindow(window: *Window) void;
 
+pub const hideWindow = glfwHideWindow;
+extern fn glfwHideWindow(window: *Window) void;
+
+pub const showWindow = glfwShowWindow;
+extern fn glfwShowWindow(window: *Window) void;
+
 pub const setWindowCloseCallback = glfwSetWindowCloseCallback;
 extern fn glfwSetWindowCloseCallback(window: *Window, callback: ?WindowCloseFn) ?WindowCloseFn;
 pub const WindowCloseFn = *const fn (
