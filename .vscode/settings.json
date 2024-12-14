@@ -1,0 +1,19 @@
+{
+    "cSpell.words": [
+        "anyopaque",
+        "behaviour",
+        "callconv",
+        "chdir",
+        "comptime",
+        "deinit",
+        "glfw",
+        "ICONIFIED",
+        "ICONIFY",
+        "LIBDECOR",
+        "opengl",
+        "opengles",
+        "Scancode",
+        "srgb",
+        "Wvidmode"
+    ]
+}

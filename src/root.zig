@@ -1,307 +1,452 @@
-const builtin = @import("builtin");
 const std = @import("std");
+const err = @import("error.zig");
+const c = @cImport({
+    @cInclude("glfw3.h");
+});
 
-const options = @import("zglfw_options");
+const Cast = @import("cast.zig").Cast;
+const PtrCast = @import("cast.zig").PtrCast;
+const GLFWError = @import("error.zig").GLFWError;
 
-comptime {
-    _ = std.testing.refAllDeclsRecursive(@This());
+fn initHint(hint: InitHint, value: anytype) void {
+    comptime {
+        switch (hint) {
+            .platform => {
+                std.debug.assert(@TypeOf(value) == PlatformHint, "expected a PlatformHint");
+            },
+            .wayland_libdecor => {
+                std.debug.assert(@TypeOf(value) == WaylandLibDecor, "expected a WaylandLibDecor");
+            },
+            .angle_platform_type => {
+                std.debug.assert(@TypeOf(value) == AnglePlatformType, "expected a AnglePlatformType");
+            },
+            else => {
+                std.debug.assert(@TypeOf(value) == bool, "expected a bool");
+            },
+        }
+    }
+
+    switch (@typeInfo(@TypeOf(value))) {
+        .int, .comptime_int => {
+            c.glfwInitHint(@intFromEnum(hint), @as(c_int, @intCast(value)));
+        },
+        .bool => c.glfwInitHint(@intFromEnum(hint), @as(c_int, @intCast(@intFromBool(value)))),
+        else => @compileError("expected a int or bool, got " ++ @typeName(@TypeOf(value))),
+    }
 }
 
-pub const init = glfwInit;
-extern fn glfwInit() i32;
-
-pub const terminate = glfwTerminate;
-extern fn glfwTerminate() void;
-
-pub const pollEvents = glfwPollEvents;
-extern fn glfwPollEvents() void;
-
-pub const vulkanSupported = glfwVulkanSupported;
-extern fn glfwVulkanSupported() i32;
-
-pub const getTime = glfwGetTime;
-extern fn glfwGetTime() f64;
-
-pub const setTime = glfwSetTime;
-extern fn glfwSetTime(time: f64) void;
-
-pub const rawMouseMotionSupported = glfwRawMouseMotionSupported;
-extern fn glfwRawMouseMotionSupported() i32;
-
-pub const getError = glfwGetError;
-extern fn glfwGetError(description: ?*?[*:0]const u8) i32;
-
-pub const setErrorCallback = glfwSetErrorCallback;
-extern fn glfwSetErrorCallback(callback: ?ErrorFn) ?ErrorFn;
-
-// Vulkan
-pub const getRequiredInstanceExtensions = glfwGetRequiredInstanceExtensions;
-extern fn glfwGetRequiredInstanceExtensions(count: *i32) [*c][*c]const u8;
-
-// Input
-pub const getKeyName = glfwGetKeyName;
-extern fn glfwGetKeyName(key: i32) ?[*:0]const u8;
-
-pub const getKeyScancode = glfwGetKeyScancode;
-extern fn glfwGetKeyScancode(key: i32) i32;
-
-// Window
-pub const createWindow = glfwCreateWindow;
-extern fn glfwCreateWindow(
-    width: i32,
-    height: i32,
-    title: [*:0]const u8,
-    monitor: ?*Monitor,
-    share: ?*Window,
-) ?*Window;
-
-pub const getWindowAttrib = glfwGetWindowAttrib;
-extern fn glfwGetWindowAttrib(window: *Window, attrib: Attribute) i32;
-
-pub const setWindowAttrib = glfwSetWindowAttrib;
-extern fn glfwSetWindowAttrib(window: *Window, attrib: Attribute, value: i32) void;
-
-pub inline fn getWindowUserPointer(T: type, window: *Window) ?*T {
-    return @alignCast(@ptrCast(glfwGetWindowUserPointer(window)));
+pub inline fn init() GLFWError!void {
+    if (c.glfwInit() != c.GLFW_TRUE) {
+        try err.any();
+        return GLFWError.UnknownError;
+    }
 }
 
-extern fn glfwGetWindowUserPointer(window: *Window) ?*anyopaque;
-
-pub inline fn setWindowUserPointer(T: type, window: *Window, pointer: ?*T) void {
-    glfwSetWindowUserPointer(window, @alignCast(@ptrCast(pointer)));
-}
-extern fn glfwSetWindowUserPointer(window: *Window, pointer: ?*anyopaque) void;
-
-pub const windowShouldClose = glfwWindowShouldClose;
-extern fn glfwWindowShouldClose(window: *Window) i32;
-
-pub const setWindowShouldClose = glfwSetWindowShouldClose;
-extern fn glfwSetWindowShouldClose(window: *Window, should_close: i32) void;
-
-pub const destroyWindow = glfwDestroyWindow;
-extern fn glfwDestroyWindow(window: *Window) void;
-
-pub const setWindowSizeLimits = glfwSetWindowSizeLimits;
-extern fn glfwSetWindowSizeLimits(window: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void;
-
-pub const getKey = glfwGetKey;
-extern fn glfwGetKey(window: *Window, key: Key) Action;
-
-pub const getMouseButton = glfwGetMouseButton;
-extern fn glfwGetMouseButton(window: *Window, button: MouseButton) Action;
-
-pub const getCursorPos = glfwGetCursorPos;
-extern fn glfwGetCursorPos(window: *Window, xpos: *f64, ypos: *f64) void;
-
-pub const getFramebufferSize = glfwGetFramebufferSize;
-extern fn glfwGetFramebufferSize(window: *Window, width: *i32, height: *i32) void;
-
-pub const getWindowSize = glfwGetWindowSize;
-extern fn glfwGetWindowSize(window: *Window, width: *i32, height: *i32) void;
-
-pub const setWindowSize = glfwSetWindowSize;
-extern fn glfwSetWindowSize(window: *Window, width: i32, height: i32) void;
-
-pub const getWindowPos = glfwGetWindowPos;
-extern fn glfwGetWindowPos(window: *Window, xpos: *i32, ypos: *i32) void;
-
-pub const setWindowPos = glfwSetWindowPos;
-extern fn glfwSetWindowPos(window: *Window, xpos: i32, ypos: i32) void;
-
-pub const setWindowTitle = glfwSetWindowTitle;
-extern fn glfwSetWindowTitle(window: *Window, title: [*:0]const u8) void;
-
-pub const focusWindow = glfwFocusWindow;
-extern fn glfwFocusWindow(window: *Window) void;
-
-pub const hideWindow = glfwHideWindow;
-extern fn glfwHideWindow(window: *Window) void;
-
-pub const showWindow = glfwShowWindow;
-extern fn glfwShowWindow(window: *Window) void;
-
-pub const setWindowCloseCallback = glfwSetWindowCloseCallback;
-extern fn glfwSetWindowCloseCallback(window: *Window, callback: ?WindowCloseFn) ?WindowCloseFn;
-pub const WindowCloseFn = *const fn (
-    window: *Window,
-) callconv(.C) void;
-
-pub const setFramebufferSizeCallback = glfwSetFramebufferSizeCallback;
-extern fn glfwSetFramebufferSizeCallback(window: *Window, callback: ?FramebufferSizeFn) ?FramebufferSizeFn;
-pub const FramebufferSizeFn = *const fn (
-    window: *Window,
-    width: i32,
-    height: i32,
-) callconv(.C) void;
-
-pub const setWindowSizeCallback = glfwSetWindowSizeCallback;
-extern fn glfwSetWindowSizeCallback(window: *Window, callback: ?WindowSizeFn) ?WindowSizeFn;
-pub const WindowSizeFn = *const fn (
-    window: *Window,
-    width: i32,
-    height: i32,
-) callconv(.C) void;
-
-pub const setWindowPosCallback = glfwSetWindowPosCallback;
-extern fn glfwSetWindowPosCallback(window: *Window, callback: ?WindowPosFn) ?WindowPosFn;
-pub const WindowPosFn = *const fn (
-    window: *Window,
-    xpos: i32,
-    ypos: i32,
-) callconv(.C) void;
-
-pub const setWindowFocusCallback = glfwSetWindowFocusCallback;
-extern fn glfwSetWindowFocusCallback(window: *Window, callback: ?WindowFocusFn) ?WindowFocusFn;
-pub const WindowFocusFn = *const fn (
-    window: *Window,
-    focused: i32,
-) callconv(.C) void;
-
-pub const setWindowIconifyCallback = glfwSetWindowIconifyCallback;
-extern fn glfwSetWindowIconifyCallback(window: *Window, callback: ?IconifyFn) ?IconifyFn;
-pub const IconifyFn = *const fn (
-    window: *Window,
-    iconified: i32,
-) callconv(.C) void;
-
-pub const setWindowContentScaleCallback = glfwSetWindowContentScaleCallback;
-extern fn glfwSetWindowContentScaleCallback(window: *Window, callback: ?WindowContentScaleFn) ?WindowContentScaleFn;
-pub const WindowContentScaleFn = *const fn (
-    window: *Window,
-    xscale: f32,
-    yscale: f32,
-) callconv(.C) void;
-
-pub const setKeyCallback = glfwSetKeyCallback;
-extern fn glfwSetKeyCallback(window: *Window, callback: ?KeyFn) ?KeyFn;
-pub const KeyFn = *const fn (
-    window: *Window,
-    key: Key,
-    scancode: i32,
-    action: Action,
-    mods: Mods,
-) callconv(.C) void;
-
-pub const setCharCallback = glfwSetCharCallback;
-extern fn glfwSetCharCallback(window: *Window, callback: ?CharFn) ?CharFn;
-pub const CharFn = *const fn (
-    window: *Window,
-    codepoint: u32,
-) callconv(.C) void;
-
-pub const setDropCallback = glfwSetDropCallback;
-extern fn glfwSetDropCallback(window: *Window, callback: ?DropFn) ?DropFn;
-pub const DropFn = *const fn (
-    window: *Window,
-    path_count: i32,
-    paths: [*][*:0]const u8,
-) callconv(.C) void;
-
-pub const setMouseButtonCallback = glfwSetMouseButtonCallback;
-extern fn glfwSetMouseButtonCallback(window: *Window, callback: ?MouseButtonFn) ?MouseButtonFn;
-pub const MouseButtonFn = *const fn (
-    window: *Window,
-    button: MouseButton,
-    action: Action,
-    mods: Mods,
-) callconv(.C) void;
-
-pub const setCursorPosCallback = glfwSetCursorPosCallback;
-extern fn glfwSetCursorPosCallback(window: *Window, callback: ?CursorPosFn) ?CursorPosFn;
-pub const CursorPosFn = *const fn (
-    window: *Window,
-    xpos: f64,
-    ypos: f64,
-) callconv(.C) void;
-
-pub const setScrollCallback = glfwSetScrollCallback;
-extern fn glfwSetScrollCallback(window: *Window, callback: ?ScrollFn) ?ScrollFn;
-pub const ScrollFn = *const fn (
-    window: *Window,
-    xoffset: f64,
-    yoffset: f64,
-) callconv(.C) void;
-
-pub const setCursorEnterCallback = glfwSetCursorEnterCallback;
-extern fn glfwSetCursorEnterCallback(window: *Window, callback: ?CursorEnterFn) ?CursorEnterFn;
-pub const CursorEnterFn = *const fn (
-    window: *Window,
-    entered: i32,
-) callconv(.C) void;
-
-pub const windowHint = glfwWindowHint;
-extern fn glfwWindowHint(hint: WindowHint, value: i32) void;
-
-pub const defaultWindowHints = glfwDefaultWindowHints;
-extern fn glfwDefaultWindowHints() void;
-
-// Platform
-pub const getWin32Window = glfwGetWin32Window;
-extern fn glfwGetWin32Window(*Window) ?std.os.windows.HWND;
-
-pub const getWaylandWindow = glfwGetWaylandWindow;
-extern fn glfwGetWaylandWindow(window: *Window) ?*anyopaque;
-
-pub const getX11Window = glfwGetX11Window;
-extern fn glfwGetX11Window(window: *Window) u32;
-
-pub const getCocoaWindow = glfwGetCocoaWindow;
-extern fn glfwGetCocoaWindow(window: *Window) ?*anyopaque;
-
-pub fn convertToError(e: i32) Error!void {
-    return switch (e) {
-        0 => {},
-        0x00010001 => Error.NotInitialized,
-        0x00010002 => Error.NoCurrentContext,
-        0x00010003 => Error.InvalidEnum,
-        0x00010004 => Error.InvalidValue,
-        0x00010005 => Error.OutOfMemory,
-        0x00010006 => Error.APIUnavailable,
-        0x00010007 => Error.VersionUnavailable,
-        0x00010008 => Error.PlatformError,
-        0x00010009 => Error.FormatUnavailable,
-        0x0001000A => Error.NoWindowContext,
-        0x0001000B => Error.CursorUnavailable,
-        0x0001000C => Error.FeatureUnavailable,
-        0x0001000D => Error.FeatureUnimplemented,
-        0x0001000E => Error.PlatformUnavailable,
-        else => Error.Unknown,
-    };
+pub inline fn deinit() void {
+    c.glfwTerminate();
 }
 
-pub const Error = error{
-    NotInitialized,
-    NoCurrentContext,
-    InvalidEnum,
-    InvalidValue,
-    OutOfMemory,
-    APIUnavailable,
-    VersionUnavailable,
-    PlatformError,
-    FormatUnavailable,
-    NoWindowContext,
-    CursorUnavailable,
-    FeatureUnavailable,
-    FeatureUnimplemented,
-    PlatformUnavailable,
-    Unknown,
+pub inline fn pollEvents() void {
+    c.glfwPollEvents();
+}
+
+pub fn windowHint(hint: WindowHint, value: anytype) void {
+    switch (hint) {
+        .client_api => {
+            std.debug.assert(@TypeOf(value) == API);
+        },
+        .context_creation_api => {
+            std.debug.assert(@TypeOf(value) == ContextCreationAPI);
+        },
+        .context_robustness => {
+            std.debug.assert(@TypeOf(value) == ContextRobustness);
+        },
+        .context_release_behaviour => {
+            std.debug.assert(@TypeOf(value) == ReleaseBehaviour);
+        },
+        .opengl_profile => {
+            std.debug.assert(@TypeOf(value) == OpenGLProfile);
+        },
+        .red_bits, .green_bits, .blue_bits, .alpha_bits, .depth_bits, .stencil_bits, .samples, .refresh_rate, .position_x, .position_y => {
+            std.debug.assert(@TypeOf(value) == c_int);
+        },
+        else => {
+            std.debug.assert(@TypeOf(value) == bool);
+        },
+    }
+
+    switch (@typeInfo(@TypeOf(value))) {
+        .Int => {
+            c.glfwWindowHint(@intFromEnum(hint), @as(c_int, @intCast(value)));
+        },
+        .Bool => {
+            c.glfwWindowHint(@intFromEnum(hint), @as(c_int, @intCast(@intFromBool(value))));
+        },
+        else => @compileError("expected a int or bool, got " ++ @typeName(@TypeOf(value))),
+    }
+}
+
+pub inline fn windowDefaultHints() void {
+    c.glfwDefaultWindowHints();
+}
+
+pub const JoystickCallbackFn = *const fn (i32, i32) callconv(.C) void;
+pub inline fn setJoystickCallback(callback: ?JoystickCallbackFn) void {
+    return c.glfwSetJoystickCallback(callback);
+}
+
+pub const MonitorCallbackFn = *const fn (?*Monitor, i32) callconv(.C) void;
+pub inline fn setMonitorCallback(callback: ?MonitorCallbackFn) void {
+    return c.glfwSetMonitorCallback(callback);
+}
+
+// Window API
+pub const Window = extern struct {
+    inner: *c.GLFWwindow = undefined,
+
+    pub const to = PtrCast(Window).to;
+    pub const from = PtrCast(Window).from;
+    pub const toOptional = PtrCast(Window).toOptional;
+    pub const fromOptional = PtrCast(Window).fromOptional;
 };
 
-pub const Monitor = opaque {};
-pub const Window = opaque {};
-pub const GlProc = *const anyopaque;
-pub const ErrorFn = *const fn (
-    error_code: i32,
-    description: *?[:0]const u8,
-) callconv(.C) void;
+pub fn createWindow(width: i32, height: i32, title: [:0]const u8, monitor: ?*Monitor, share: ?*Window) GLFWError!*Window {
+    const window = c.glfwCreateWindow(width, height, title.ptr, Monitor.toOptional(monitor), Window.toOptional(share));
+    if (window) |handle| {
+        return Window.from(handle);
+    }
 
-pub const ClientApi = enum(i32) {
-    no_api = 0,
-    opengl_api = 0x00030001,
-    opengl_es_api = 0x00030002,
+    try err.any();
+
+    return GLFWError.UnknownError;
+}
+
+pub inline fn destroyWindow(self: *Window) void {
+    c.glfwDestroyWindow(self.to());
+    self.inner = undefined;
+}
+
+pub inline fn windowShouldClose(self: *Window) bool {
+    return c.glfwWindowShouldClose(self.to()) == c.GLFW_TRUE;
+}
+
+pub inline fn setWindowShouldClose(self: *Window, value: bool) void {
+    c.glfwSetWindowShouldClose(self.to(), value);
+}
+
+pub inline fn swapBuffers(self: ?*Window) void {
+    c.glfwSwapBuffers(Window.toOptional(self));
+}
+
+pub inline fn hideWindow(self: *Window) void {
+    c.glfwHideWindow(self.to());
+}
+
+pub inline fn showWindow(self: *Window) void {
+    c.glfwShowWindow(self.to());
+}
+
+pub inline fn focusWindow(self: *Window) void {
+    c.glfwFocusWindow(self.to());
+}
+
+pub inline fn iconifyWindow(self: *Window) void {
+    c.glfwIconifyWindow(self.to());
+}
+
+pub inline fn requestWindowAttention(self: *Window) void {
+    c.glfwRequestWindowAttention(self.to());
+}
+
+pub inline fn setWindowUserPointer(self: *Window, pointer: *anyopaque) void {
+    c.glfwSetWindowUserPointer(self.to(), pointer);
+}
+
+pub inline fn getWindowUserPointer(T: type, self: *Window) ?*T {
+    if (c.glfwGetWindowUserPointer(self.to())) |user_pointer|
+        return @as(?*T, @ptrCast(@alignCast(user_pointer)));
+    return null;
+}
+
+pub inline fn setWindowSizeLimits(self: *Window, min_w: i32, min_h: i32, max_w: i32, max_h: i32) void {
+    c.glfwSetWindowSizeLimits(self.to(), min_w, min_h, max_w, max_h);
+}
+
+pub inline fn setWindowAspectRatio(self: *Window, numerator: i32, denominator: i32) void {
+    c.glfwSetWindowAspectRatio(self.to(), numerator, denominator);
+}
+
+pub inline fn setWindowPos(self: *Window, x: i32, y: i32) void {
+    c.glfwSetWindowPos(self.to(), x, y);
+}
+
+pub inline fn setWindowIcon(self: *Window, count: i32, images: **c.GLFWimage) void {
+    c.glfwSetWindowIcon(self.to(), count, images);
+}
+
+pub inline fn setWindowMonitor(self: *Window, monitor: ?*Monitor, xpos: i32, ypos: i32, width: i32, height: i32, refresh_rate: i32) void {
+    c.glfwSetWindowMonitor(self.to(), Monitor.toOptional(monitor), xpos, ypos, width, height, refresh_rate);
+}
+
+pub inline fn setWindowOpacity(self: *Window, opacity: f32) void {
+    c.glfwSetWindowOpacity(self.to(), opacity);
+}
+
+pub inline fn setWindowAttrib(self: *Window, attrib: Attribute, value: bool) void {
+    c.glfwSetWindowAttrib(self.to(), attrib, @intCast(@intFromBool(value)));
+}
+
+pub inline fn setWindowTitle(self: *Window, title: [:0]const u8) void {
+    c.glfwSetWindowTitle(self.to(), title.ptr);
+}
+
+pub const IconifyCallbackFn = *const fn (?*Window, i32) callconv(.C) void;
+pub inline fn setWindowIconifyCallback(self: *Window, callback: ?IconifyCallbackFn) ?IconifyCallbackFn {
+    return c.glfwSetWindowIconifyCallback(self.to(), callback);
+}
+
+pub const PositionCallbackFn = *const fn (?*Window, i32, i32) callconv(.C) void;
+pub inline fn setWindowPosCallback(self: *Window, callback: ?PositionCallbackFn) ?PositionCallbackFn {
+    return c.glfwSetWindowPosCallback(self.to(), callback);
+}
+
+pub const SizeCallbackFn = *const fn (?*Window, i32, c_int) callconv(.C) void;
+pub inline fn setWindowSizeCallback(self: *Window, callback: ?SizeCallbackFn) ?SizeCallbackFn {
+    return c.glfwSetWindowSizeCallback(self.to(), callback);
+}
+
+pub const CloseCallbackFn = *const fn (?*Window) callconv(.C) void;
+pub inline fn setWindowCloseCallback(self: *Window, callback: ?CloseCallbackFn) ?CloseCallbackFn {
+    return c.glfwSetWindowCloseCallback(self.to(), callback);
+}
+
+pub const RefreshCallbackFn = *const fn (?*Window) callconv(.C) void;
+pub inline fn setWindowRefreshCallback(self: *Window, callback: ?RefreshCallbackFn) ?RefreshCallbackFn {
+    return c.glfwSetWindowRefreshCallback(self.to(), callback);
+}
+
+pub const FocusCallbackFn = *const fn (?*Window, i32) callconv(.C) void;
+pub inline fn setWindowFocusCallback(self: *Window, callback: ?FocusCallbackFn) ?FocusCallbackFn {
+    return c.glfwSetWindowFocusCallback(self.to(), callback);
+}
+
+pub const MaximizeCallbackFn = *const fn (?*Window, i32) callconv(.C) void;
+pub inline fn setWindowMaximizeCallback(self: *Window, callback: ?MaximizeCallbackFn) ?MaximizeCallbackFn {
+    return c.glfwSetWindowMaximizeCallback(self.to(), callback);
+}
+
+pub const ContentScaleCallbackFn = *const fn (?*Window, f32, f32) callconv(.C) void;
+pub inline fn setWindowContentScaleCallback(self: *Window, callback: ?ContentScaleCallbackFn) ?ContentScaleCallbackFn {
+    return c.glfwSetWindowContentScaleCallback(self.to(), callback);
+}
+
+pub const KeyCallbackFn = *const fn (?*Window, Key, i32, Action, Mods) callconv(.C) void;
+pub inline fn setKeyCallback(self: *Window, callback: ?KeyCallbackFn) ?KeyCallbackFn {
+    return c.glfwSetKeyCallback(self.to(), callback);
+}
+
+pub const CharCallbackFn = *const fn (?*Window, u32) callconv(.C) void;
+pub inline fn setCharCallback(self: *Window, callback: ?CharCallbackFn) ?CharCallbackFn {
+    return c.glfwSetCharCallback(self.to(), callback);
+}
+
+pub const CharModsCallbackFn = *const fn (?*Window, u32, i32) callconv(.C) void;
+pub inline fn setCharModsCallback(self: *Window, callback: ?CharModsCallbackFn) ?CharModsCallbackFn {
+    return c.glfwSetCharModsCallback(self.to(), callback);
+}
+
+pub const MouseButtonCallbackFn = *const fn (?*Window, MouseButton, Action, Mods) callconv(.C) void;
+pub inline fn setMouseButtonCallback(self: *Window, callback: ?MouseButtonCallbackFn) ?MouseButtonCallbackFn {
+    return c.glfwSetMouseButtonCallback(self.to(), callback);
+}
+
+pub const CursorPosCallbackFn = *const fn (?*Window, f64, f64) callconv(.C) void;
+pub inline fn setCursorPosCallback(self: *Window, callback: ?CursorPosCallbackFn) ?CursorPosCallbackFn {
+    return c.glfwSetCursorPosCallback(self.to(), callback);
+}
+
+pub const CursorEnterCallbackFn = *const fn (?*Window, i32) callconv(.C) void;
+pub inline fn setCursorEnterCallback(self: *Window, callback: ?CursorEnterCallbackFn) ?CursorEnterCallbackFn {
+    return c.glfwSetCursorEnterCallback(self.to(), callback);
+}
+
+pub const ScrollCallbackFn = *const fn (?*Window, f64, f64) callconv(.C) void;
+pub inline fn setScrollCallback(self: *Window, callback: ?ScrollCallbackFn) ?ScrollCallbackFn {
+    return c.glfwSetScrollCallback(self.to(), callback);
+}
+
+pub const DropCallbackFn = *const fn (?*Window, i32, [*][*:0]const u8) callconv(.C) void;
+pub inline fn setDropCallback(self: *Window, callback: ?DropCallbackFn) ?DropCallbackFn {
+    return c.glfwSetDropCallback(self.to(), callback);
+}
+
+pub inline fn getWin32Window(self: *Window) ?std.os.windows.HWND {
+    return c.glfwGetWin32Window(self.to());
+}
+
+pub inline fn getWaylandWindow(self: *Window) ?*anyopaque {
+    return c.glfwGetWaylandWindow(self.to());
+}
+
+pub inline fn getX11Window(self: *Window) u32 {
+    return c.glfwGetX11Window(self.to());
+}
+
+pub inline fn getCocoaWindow(self: *Window) ?*anyopaque {
+    return c.glfwGetCocoaWindow(self.to());
+}
+
+pub const VideoMode = extern struct {
+    width: c_int = std.mem.zeroes(c_int),
+    height: c_int = std.mem.zeroes(c_int),
+    red_bits: c_int = std.mem.zeroes(c_int),
+    green_bits: c_int = std.mem.zeroes(c_int),
+    blue_bits: c_int = std.mem.zeroes(c_int),
+    refresh_rate: c_int = std.mem.zeroes(c_int),
+
+    pub const to = Cast(VideoMode, c.GLFWvidmode).to;
+    pub const from = Cast(VideoMode, c.GLFWvidmode).from;
+    pub const toOptional = Cast(VideoMode, c.GLFWvidmode).toOptional;
+    pub const fromOptional = Cast(VideoMode, c.GLFWvidmode).fromOptional;
+    pub const fromMultiple = Cast(VideoMode, c.GLFWvidmode).fromMultiple;
 };
 
-pub const WindowHint = enum(i32) {
+pub const Monitor = extern struct {
+    inner: *c.GLFWmonitor = undefined,
+
+    pub const to = PtrCast(Monitor).to;
+    pub const from = PtrCast(Monitor).from;
+    pub const toOptional = PtrCast(Monitor).toOptional;
+    pub const fromOptional = PtrCast(Monitor).fromOptional;
+};
+
+pub fn getPrimaryMonitor() !*Monitor {
+    if (c.glfwGetPrimaryMonitor()) |handle| {
+        return Monitor.from(handle);
+    }
+    try err.any();
+    return GLFWError.UnknownError;
+}
+
+pub fn getVideoMode(self: *Monitor) *VideoMode {
+    return VideoMode.fromMultiple(c.glfwGetVideoMode(self.to()));
+}
+
+pub const PlatformHint = enum(c_int) {
+    any_platform = c.GLFW_ANY_PLATFORM,
+    win32 = c.GLFW_PLATFORM_WIN32,
+    cocoa = c.GLFW_PLATFORM_COCOA,
+    x11 = c.GLFW_PLATFORM_X11,
+    wayland = c.GLFW_PLATFORM_WAYLAND,
+    null = c.GLFW_PLATFORM_NULL,
+};
+
+pub const AnglePlatformType = enum(c_int) {
+    none = c.GLFW_ANGLE_PLATFORM_TYPE_NONE,
+    opengl = c.GLFW_ANGLE_PLATFORM_TYPE_OPENGL,
+    opengles = c.GLFW_ANGLE_PLATFORM_TYPE_OPENGLES,
+    d3d9 = c.GLFW_ANGLE_PLATFORM_TYPE_D3D9,
+    d3d11 = c.GLFW_ANGLE_PLATFORM_TYPE_D3D11,
+    vulkan = c.GLFW_ANGLE_PLATFORM_TYPE_VULKAN,
+    metal = c.GLFW_ANGLE_PLATFORM_TYPE_METAL,
+};
+
+pub const WaylandLibDecor = enum(c_int) {
+    prefer = c.GLFW_WAYLAND_PREFER_LIBDECOR,
+    disable = c.GLFW_WAYLAND_DISABLE_LIBDECOR,
+};
+
+pub const InitHint = enum(c_int) {
+    platform = c.GLFW_PLATFORM,
+    joystick_hat_buttons = c.GLFW_JOYSTICK_HAT_BUTTONS,
+    angle_platform_type = c.GLFW_ANGLE_PLATFORM_TYPE,
+    cocoa_chdir_resources = c.GLFW_COCOA_CHDIR_RESOURCES,
+    cocoa_menubar = c.GLFW_COCOA_MENUBAR,
+    wayland_libdecor = c.GLFW_WAYLAND_LIBDECOR,
+    x11_xcb_vulkan_surface = c.GLFW_X11_XCB_VK_SURFACE,
+};
+
+pub const API = enum(c_int) {
+    none = c.GLFW_NO_API,
+    opengl = c.GLFW_OPENGL_API,
+    opengl_es = c.GLFW_OPENGL_ES_API,
+};
+
+pub const ContextCreationAPI = enum(c_int) {
+    native = c.GLFW_NATIVE_CONTEXT_API,
+    egl = c.GLFW_EGL_CONTEXT_API,
+    osmesa = c.GLFW_OSMESA_CONTEXT_API,
+};
+
+pub const ContextRobustness = enum(c_int) {
+    no_robustness = c.GLFW_NO_ROBUSTNESS,
+    no_reset_notification = c.GLFW_NO_RESET_NOTIFICATION,
+    lose_context_on_reset = c.GLFW_LOSE_CONTEXT_ON_RESET,
+};
+
+pub const ReleaseBehaviour = enum(c_int) {
+    any = c.GLFW_ANY_RELEASE_BEHAVIOR,
+    flush = c.GLFW_RELEASE_BEHAVIOR_FLUSH,
+    none = c.GLFW_RELEASE_BEHAVIOR_NONE,
+};
+
+pub const OpenGLProfile = enum(c_int) {
+    any = c.GLFW_OPENGL_ANY_PROFILE,
+    core = c.GLFW_OPENGL_CORE_PROFILE,
+    compat = c.GLFW_OPENGL_COMPAT_PROFILE,
+};
+
+pub const WindowHint = enum(c_int) {
+    focused = c.GLFW_FOCUSED,
+    iconified = c.GLFW_ICONIFIED,
+    resizable = c.GLFW_RESIZABLE,
+    visible = c.GLFW_VISIBLE,
+    decorated = c.GLFW_DECORATED,
+    auto_iconify = c.GLFW_AUTO_ICONIFY,
+    floating = c.GLFW_FLOATING,
+    maximized = c.GLFW_MAXIMIZED,
+    center_cursor = c.GLFW_CENTER_CURSOR,
+    transparent_framebuffer = c.GLFW_TRANSPARENT_FRAMEBUFFER,
+    hovered = c.GLFW_HOVERED,
+    focus_on_show = c.GLFW_FOCUS_ON_SHOW,
+    mouse_passthrough = c.GLFW_MOUSE_PASSTHROUGH,
+    position_x = c.GLFW_POSITION_X,
+    position_y = c.GLFW_POSITION_Y,
+    red_bits = c.GLFW_RED_BITS,
+    green_bits = c.GLFW_GREEN_BITS,
+    blue_bits = c.GLFW_BLUE_BITS,
+    alpha_bits = c.GLFW_ALPHA_BITS,
+    depth_bits = c.GLFW_DEPTH_BITS,
+    stencil_bits = c.GLFW_STENCIL_BITS,
+    stereo = c.GLFW_STEREO,
+    samples = c.GLFW_SAMPLES,
+    srgb_capable = c.GLFW_SRGB_CAPABLE,
+    refresh_rate = c.GLFW_REFRESH_RATE,
+    doublebuffer = c.GLFW_DOUBLEBUFFER,
+    client_api = c.GLFW_CLIENT_API,
+    context_version_major = c.GLFW_CONTEXT_VERSION_MAJOR,
+    context_version_minor = c.GLFW_CONTEXT_VERSION_MINOR,
+    context_revision = c.GLFW_CONTEXT_REVISION,
+    context_robustness = c.GLFW_CONTEXT_ROBUSTNESS,
+    opengl_forward_compat = c.GLFW_OPENGL_FORWARD_COMPAT,
+    opengl_debug_context = c.GLFW_OPENGL_DEBUG_CONTEXT,
+    opengl_profile = c.GLFW_OPENGL_PROFILE,
+    context_release_behaviour = c.GLFW_CONTEXT_RELEASE_BEHAVIOR,
+    context_no_error = c.GLFW_CONTEXT_NO_ERROR,
+    context_creation_api = c.GLFW_CONTEXT_CREATION_API,
+    scale_to_monitor = c.GLFW_SCALE_TO_MONITOR,
+    scale_framebuffer = c.GLFW_SCALE_FRAMEBUFFER,
+    cocoa_retina_framebuffer = c.GLFW_COCOA_RETINA_FRAMEBUFFER,
+    cocoa_frame_name = c.GLFW_COCOA_FRAME_NAME,
+    cocoa_graphics_switching = c.GLFW_COCOA_GRAPHICS_SWITCHING,
+    x11_class_name = c.GLFW_X11_CLASS_NAME,
+    x11_instance_name = c.GLFW_X11_INSTANCE_NAME,
+    win32_keyboard_menu = c.GLFW_WIN32_KEYBOARD_MENU,
+    win32_showdefault = c.GLFW_WIN32_SHOWDEFAULT,
+    wayland_app_id = c.GLFW_WAYLAND_APP_ID,
+};
+
+pub const Attribute = enum(c_int) {
     focused = 0x00020001,
     iconified = 0x00020002,
     resizable = 0x00020003,
@@ -314,51 +459,15 @@ pub const WindowHint = enum(i32) {
     transparent_framebuffer = 0x0002000A,
     hovered = 0x0002000B,
     focus_on_show = 0x0002000C,
-    mouse_passthrough = 0x0002000D,
-    position_x = 0x0002000E,
-    position_y = 0x0002000F,
-    red_bits = 0x00021001,
-    green_bits = 0x00021002,
-    blue_bits = 0x00021003,
-    alpha_bits = 0x00021004,
-    depth_bits = 0x00021005,
-    stencil_bits = 0x00021006,
-    // ACCUM_*_BITS/AUX_BUFFERS are deprecated
-    stereo = 0x0002100C,
-    samples = 0x0002100D,
-    srgb_capable = 0x0002100E,
-    refresh_rate = 0x0002100F,
-    doublebuffer = 0x00021010,
-    client_api = 0x00022001,
-    context_version_major = 0x00022002,
-    context_version_minor = 0x00022003,
-    context_revision = 0x00022004,
-    context_robustness = 0x00022005,
-    opengl_forward_compat = 0x00022006,
-    opengl_debug_context = 0x00022007,
-    opengl_profile = 0x00022008,
-    context_release_behaviour = 0x00022009,
-    context_no_error = 0x0002200A,
-    context_creation_api = 0x0002200B,
-    scale_to_monitor = 0x0002200C,
-    scale_framebuffer = 0x0002200D,
-    cocoa_retina_framebuffer = 0x00023001,
-    cocoa_frame_name = 0x00023002,
-    cocoa_graphics_switching = 0x00023003,
-    x11_class_name = 0x00024001,
-    x11_instance_name = 0x00024002,
-    win32_keyboard_menu = 0x00025001,
-    win32_showdefault = 0x00025002,
-    wayland_app_id = 0x00026001,
 };
 
-pub const Action = enum(i32) {
+pub const Action = enum(c_int) {
     release,
     press,
     repeat,
 };
 
-pub const MouseButton = enum(i32) {
+pub const MouseButton = enum(c_int) {
     left,
     right,
     middle,
@@ -369,9 +478,8 @@ pub const MouseButton = enum(i32) {
     eight,
 };
 
-pub const Key = enum(i32) {
+pub const Key = enum(c_int) {
     unknown = -1,
-
     space = 32,
     apostrophe = 39,
     comma = 44,
@@ -495,7 +603,7 @@ pub const Key = enum(i32) {
     menu = 348,
 };
 
-pub const Mods = packed struct(i32) {
+pub const Mods = packed struct(c_int) {
     shift: bool = false,
     control: bool = false,
     alt: bool = false,
@@ -503,19 +611,4 @@ pub const Mods = packed struct(i32) {
     caps_lock: bool = false,
     num_lock: bool = false,
     _padding: i26 = 0,
-};
-
-pub const Attribute = enum(i32) {
-    focused = 0x00020001,
-    iconified = 0x00020002,
-    resizable = 0x00020003,
-    visible = 0x00020004,
-    decorated = 0x00020005,
-    auto_iconify = 0x00020006,
-    floating = 0x00020007,
-    maximized = 0x00020008,
-    center_cursor = 0x00020009,
-    transparent_framebuffer = 0x0002000A,
-    hovered = 0x0002000B,
-    focus_on_show = 0x0002000C,
 };
