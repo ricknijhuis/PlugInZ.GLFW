@@ -13,7 +13,7 @@ pub fn PtrCast(Self: type) type {
     comptime {
         std.debug.assert(@sizeOf(Self) == @sizeOf(Inner));
         std.debug.assert(@alignOf(Self) == @alignOf(Inner));
-        std.debug.assert(@typeInfo(Inner) == .Pointer);
+        std.debug.assert(@typeInfo(Inner) == .pointer);
     }
 
     return struct {
