@@ -21,6 +21,10 @@
             .url = "https://github.com/zig-gamedev/system_sdk/archive/bf49d627a191e339f70e72668c8333717fb969b0.tar.gz",
             .hash = "122047a9298c4c9dd43389d418d6826d469b192246ba0944102964cdc57f94c562df",
         },
+        .vulkan_headers = .{
+            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.3.296.tar.gz",
+            .hash = "1220d8deff13f2e31607eb0771cb316abc7753f79424aef3edb653a101ec942ce981",
+        },
         .glfw = .{
             .url = "https://github.com/glfw/glfw/archive/21fea01161e0d6b70c0c5c1f52dc8e7a7df14a50.tar.gz",
             .hash = "122099c901b5d7ca93fc3466a7942ef0d9860df2cc418f000ce0b80c155960283739",

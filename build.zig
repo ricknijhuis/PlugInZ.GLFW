@@ -4,6 +4,8 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    const vulkan_headers = b.dependency("vulkan_headers", .{}).path("include");
+
     const glfw_dep = b.dependency("glfw", .{});
 
     const glfw = b.addStaticLibrary(.{
@@ -13,6 +15,7 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(glfw);
 
+    glfw.addIncludePath(vulkan_headers);
     glfw.addIncludePath(glfw_dep.path("include/GLFW"));
     glfw.linkLibC();
 
@@ -177,5 +180,6 @@ pub fn build(b: *std.Build) void {
     });
 
     glfw_module.linkLibrary(glfw);
+    glfw_module.addIncludePath(vulkan_headers);
     glfw_module.addIncludePath(glfw_dep.path("include/GLFW"));
 }

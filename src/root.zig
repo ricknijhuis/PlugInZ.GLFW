@@ -1,6 +1,9 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const err = @import("error.zig");
 const c = @cImport({
+    @cDefine("GLFW_INCLUDE_VULKAN", "1");
+    @cDefine("GLFW_INCLUDE_NONE", "1");
     @cInclude("glfw3.h");
 });
 
@@ -294,6 +297,34 @@ pub inline fn getX11Window(self: *Window) u32 {
 
 pub inline fn getCocoaWindow(self: *Window) ?*anyopaque {
     return c.glfwGetCocoaWindow(self.to());
+}
+
+pub inline fn vulkanSupported() bool {
+    return c.glfwVulkanSupported() == c.GLFW_TRUE;
+}
+
+pub inline fn getRequiredInstanceExtensions() ?[][*:0]const u8 {
+    var count: u32 = 0;
+    if (c.glfwGetRequiredInstanceExtensions(&count)) |extensions| return @as([*][*:0]const u8, @ptrCast(extensions))[0..count];
+    return null;
+}
+
+pub const VKProc = *const fn () callconv(if (builtin.os.tag == .windows and builtin.cpu.arch == .x86) .Stdcall else .C) void;
+pub fn getInstanceProcAddress(vk_instance: ?*anyopaque, proc_name: [*:0]const u8) callconv(.C) ?VKProc {
+    if (c.glfwGetInstanceProcAddress(if (vk_instance) |v| @as(c.VkInstance, @ptrCast(v)) else null, proc_name)) |proc_address| return proc_address;
+    return null;
+}
+
+pub inline fn getPhysicalDevicePresentationSupport(
+    vk_instance: *anyopaque,
+    vk_physical_device: *anyopaque,
+    queue_family: u32,
+) bool {
+    return c.glfwGetPhysicalDevicePresentationSupport(
+        @as(c.VkInstance, @ptrCast(vk_instance)),
+        @as(c.VkPhysicalDevice, @ptrCast(vk_physical_device)),
+        queue_family,
+    ) == c.GLFW_TRUE;
 }
 
 pub const VideoMode = extern struct {
