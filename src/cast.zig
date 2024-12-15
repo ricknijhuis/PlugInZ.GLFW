@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub fn PtrCast(Self: type) type {
-    const info = @typeInfo(Self).Struct;
+    const info = @typeInfo(Self).@"struct";
 
     comptime {
         std.debug.assert(info.layout == .@"extern");
@@ -36,7 +36,7 @@ pub fn PtrCast(Self: type) type {
 }
 
 pub fn Cast(Self: type, Extern: type) type {
-    const info = @typeInfo(Self).Struct;
+    const info = @typeInfo(Self).@"struct";
 
     comptime {
         std.debug.assert(info.layout == .@"extern");
